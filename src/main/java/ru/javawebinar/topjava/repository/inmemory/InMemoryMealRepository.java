@@ -5,19 +5,28 @@ import org.springframework.util.CollectionUtils;
 import ru.javawebinar.topjava.model.Meal;
 import ru.javawebinar.topjava.repository.MealRepository;
 
-import java.util.Collection;
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import static ru.javawebinar.topjava.repository.inmemory.InMemoryUserRepository.ADMIN_ID;
+import static ru.javawebinar.topjava.repository.inmemory.InMemoryUserRepository.USER_ID;
 
 @Repository
 public class InMemoryMealRepository implements MealRepository {
     private final Map<Integer, Map<Integer, Meal>> usersMealsMap = new ConcurrentHashMap<>();
     private final AtomicInteger counter = new AtomicInteger(0);
 
+    {
+        save(new Meal(LocalDateTime.of(2023, Month.FEBRUARY, 14, 12, 0), "обед", 510), USER_ID);
+        save(new Meal(LocalDateTime.of(2015, Month.FEBRUARY, 14, 19, 0), "ужин", 1500), ADMIN_ID);
+    }
 
     @Override
     public Meal save(Meal meal, int userId) {
@@ -34,17 +43,21 @@ public class InMemoryMealRepository implements MealRepository {
     @Override
     public boolean delete(int id, int userId) {
         Map<Integer, Meal> meals = usersMealsMap.get(userId);
-        return meals.remove(id) != null;
+        return meals.remove(id) != null && meals != null;
     }
 
     @Override
     public Meal get(int id, int userId) {
         Map<Integer, Meal> meals = usersMealsMap.get(userId);
-        return meals.get(id);
+        if (meals != null) {
+            return meals.get(id);
+        } else {
+            return null;
+        }
     }
 
     @Override
-    public Collection<Meal> getAll(int userId) {
+    public List<Meal> getAll(int userId) {
         Map<Integer, Meal> meals = usersMealsMap.get(userId);
         return CollectionUtils.isEmpty(meals) ? Collections.emptyList() : meals.values().stream()
                 .sorted(Comparator.comparing(Meal::getDateTime).reversed())
