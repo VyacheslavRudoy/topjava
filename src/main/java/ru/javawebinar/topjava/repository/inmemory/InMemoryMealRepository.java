@@ -30,7 +30,7 @@ public class InMemoryMealRepository implements MealRepository {
 
     @Override
     public Meal save(Meal meal, int userId) {
-        Map<Integer, Meal> meals = usersMealsMap.computeIfAbsent(userId, initialCapacity -> new ConcurrentHashMap<>());
+        Map<Integer, Meal> meals = usersMealsMap.computeIfAbsent(userId, uId -> new ConcurrentHashMap<>());
         if (meal.isNew()) {
             meal.setId(counter.incrementAndGet());
             meals.put(meal.getId(), meal);
@@ -43,17 +43,13 @@ public class InMemoryMealRepository implements MealRepository {
     @Override
     public boolean delete(int id, int userId) {
         Map<Integer, Meal> meals = usersMealsMap.get(userId);
-        return meals.remove(id) != null && meals != null;
+        return meals != null && meals.remove(id) != null;
     }
 
     @Override
     public Meal get(int id, int userId) {
         Map<Integer, Meal> meals = usersMealsMap.get(userId);
-        if (meals != null) {
-            return meals.get(id);
-        } else {
-            return null;
-        }
+        return meals != null ? meals.get(id) : null;
     }
 
     @Override
